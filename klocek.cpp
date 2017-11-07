@@ -1,5 +1,5 @@
-#include "paletka.h"
-#include <list>
+#include "klocek.h"
+#include "resource.h"
 #include <Windows.h>
 
 Klocek::Klocek(int x, int y, int sizeX, int sizeY,BOOLEAN hit)
