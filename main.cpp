@@ -5,7 +5,6 @@
 #include "paletka.h"
 #include "pilka.h"
 #include "resource.h"
-#include <dos.h>
 TCHAR AppName[] = "Arkanoid";
 
 std::list <Klocek> klocek;
@@ -17,12 +16,12 @@ HBRUSH brush = static_cast<HBRUSH>(GetStockObject(DC_BRUSH));
 HDC hdcMem;
 HBITMAP hbmMem;
 HANDLE hbmOld;
-LRESULT CALLBACK WindowProc(HWND hwnd, UINT message,
-	WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
 	{
-	case WM_CREATE: {
+	case WM_CREATE: 
+	{
 		GetClientRect(hwnd, &r);
 		for (int i = 0; i < 40; i++)
 		{
@@ -36,8 +35,26 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message,
 				klocek.push_back(Klocek(30 + (i - 30) * 80, 250, 20, 10, FALSE));
 		}
 		
+		paletka.paletkastart(r.right / 2, r.bottom - r.bottom*0.1, 16, 100, 15, hwnd);
+		pilka.pilkastart(r.right / 2, r.bottom - r.bottom*0.135, 10, 0, 0, hwnd);
+		
 		SetTimer(hwnd, 1, 16, NULL);
 	}break;
+	
+	case WM_CHAR: {
+		switch (wParam)
+		{
+		case ' ': {
+			if (pilka.GetVelocityX() == 0 && pilka.GetVelocityY() == 0) //odpalenie pi³ki
+			{
+				pilka.SetVelocityX(0);
+				pilka.SetVelocityY(-10);
+				pilka.SetStart(TRUE);
+			}
+		}break;
+		}
+	}break;
+	
 	case WM_PAINT: {
 		PAINTSTRUCT ps;
 
@@ -52,6 +69,10 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message,
 
 		for (it = klocek.begin(); it != klocek.end(); ++it)
 			it->Rysujklocka(hdcMem, hwnd);
+		
+		paletka.rysujpaletke(hdcMem, hwnd);
+		pilka.rysujpilke(hdcMem, hwnd);
+		
 		BitBlt(ps.hdc, r.left, r.top, r.right, r.bottom, hdcMem, 0, 0, SRCCOPY);
 
 		SelectObject(hdcMem, hbmOld);
@@ -61,6 +82,47 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message,
 
 	}break;
 	
+	case WM_TIMER:
+	{
+		switch (wParam)
+		{
+			case 1:
+			{
+				if (GetAsyncKeyState(VK_LEFT)) //poruszanie siê paletk¹
+				{
+					if (paletka.GetX() - paletka.GetWidth() / 2 - paletka.GetVelocity() > r.left)
+					{
+						paletka.SetX(-paletka.GetVelocity());
+						if (pilka.GetStart() == FALSE)
+						{
+							pilka.SetX(-paletka.GetVelocity());
+						}
+					}
+
+				}
+				if (GetAsyncKeyState(VK_RIGHT)) //poruszanie siê paletk¹
+				{
+					if (paletka.GetX() + paletka.GetWidth() / 2 + paletka.GetVelocity() < r.right)
+					{
+						paletka.SetX(paletka.GetVelocity());
+						if (pilka.GetStart() == FALSE)
+						{
+							pilka.SetX(paletka.GetVelocity());
+						}
+					}
+				}
+			}
+
+			if (pilka.GetStart()) //poruszanie pi³ki
+			{
+				pilka.SetY(pilka.GetVelocityY());
+				pilka.SetX(pilka.GetVelocityX());
+			}
+			
+		InvalidateRect(hwnd, NULL, FALSE);
+		}
+	}break;
+
 	case WM_DESTROY:
 		PostQuitMessage(0);
 		break;

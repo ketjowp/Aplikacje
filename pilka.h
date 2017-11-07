@@ -23,6 +23,7 @@ public:
 	void rysujpilke(HDC hdcMem, HWND hwnd);
 
 private:
+	HBITMAP pilkaBm;
 	POINT coordinates;
 	int size;
 	float velocityX;

@@ -1,5 +1,6 @@
 #include "pilka.h"
 #include <windows.h>
+#include "resource.h"
 
 Pilka::Pilka()
 {
@@ -8,7 +9,7 @@ Pilka::Pilka()
 	this->size = 0;
 	this->velocityX = 0;
 	this->velocityY = 0;
-	this->start = TRUE;
+	this->start = FALSE;
 }
 Pilka::~Pilka() {};
 void Pilka::pilkastart(int x, int y, int size, int velocityX, int velocityY, HWND hwnd)
@@ -18,7 +19,7 @@ void Pilka::pilkastart(int x, int y, int size, int velocityX, int velocityY, HWN
 	this->size = size;
 	this->velocityY = velocityY;
 	this->velocityX = velocityX;
-	
+
 }
 int Pilka::GetSize()const
 {
@@ -78,4 +79,15 @@ void Pilka::SetStart(BOOLEAN s)
 }
 void Pilka::rysujpilke(HDC hdcMem, HWND hwnd)
 {
+	pilkaBm = LoadBitmap((HINSTANCE)GetWindowLong(hwnd, GWL_HINSTANCE), MAKEINTRESOURCE(IDB_BITMAP2));
+	HDC hLocalDC;
+	hLocalDC = CreateCompatibleDC(hdcMem);
+	BITMAP qBitmap;
+	GetObject(reinterpret_cast<HGDIOBJ>(pilkaBm), sizeof(BITMAP),
+		reinterpret_cast<LPVOID>(&qBitmap));
+	HBITMAP hOldBmp = (HBITMAP)SelectObject(hLocalDC, pilkaBm);
+	BitBlt(hdcMem, GetX() - GetSize(), GetY() - GetSize(), GetX() + GetSize(), GetY() + GetSize(), hLocalDC, 0, 0, SRCCOPY);
+	SelectObject(hLocalDC, hOldBmp);
+	DeleteDC(hLocalDC);
+	DeleteObject(pilkaBm);
 }

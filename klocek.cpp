@@ -1,15 +1,15 @@
 #include "klocek.h"
+#include <windows.h>
 #include "resource.h"
-#include <Windows.h>
 
-Klocek::Klocek(int x, int y, int sizeX, int sizeY,BOOLEAN hit)
+Klocek::Klocek(int x, int y, int sizeX, int sizeY, BOOLEAN hit)
 {
 	this->coordinates.x = x;
 	this->coordinates.y = y;
 	this->sizeX = sizeX;
 	this->sizeY = sizeY;
 	this->hitted = hit;
-	
+
 }
 Klocek::~Klocek()
 {

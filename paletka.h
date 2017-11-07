@@ -22,6 +22,7 @@ public:
 	void Reset(RECT r);
 
 private:
+	HBITMAP paletkaBm;
 	POINT coordinates;
 	int height;
 	int width;

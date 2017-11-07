@@ -127,6 +127,8 @@
   </ItemGroup>
   <ItemGroup>
     <Image Include="klocek.bmp" />
+    <Image Include="paletka.bmp" />
+    <Image Include="pilka.bmp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Projekt a.rc" />
