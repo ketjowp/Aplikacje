@@ -1,28 +1,6 @@
+#include "paletka.h"
+#include <list>
 #include <Windows.h>
-
-class Klocek
-{
-public:
-	klocek(int x, int y, int sizeX, int sizeY, BOOLEAN hit);
-	~klocek();
-	int GetX()const;
-	int GetY()const;
-	int GetSizeY()const;
-	int GetSizeX()const;
-	void SetX(int x);
-	void SetY(int y);
-	void SetSizeX(int size);
-	void SetSizeY(int size);
-	void SetHit(BOOLEAN hit);
-	void Rysujklocka(HDC hdcMem, HWND hwnd);
-	BOOLEAN GetHit()const;
-private:
-	BOOLEAN hitted;
-	POINT coordinates;
-	int sizeX;
-	int sizeY;
-};
-
 
 Klocek::Klocek(int x, int y, int sizeX, int sizeY,BOOLEAN hit)
 {
@@ -80,4 +58,14 @@ BOOLEAN Klocek::GetHit()const
 
 void Klocek::Rysujklocka(HDC hWinDC, HWND hwnd)
 {
+	klocekBm = LoadBitmap((HINSTANCE)GetWindowLong(hwnd, GWL_HINSTANCE), MAKEINTRESOURCE(IDB_BITMAP1));
+	HDC hLocalDC;
+	hLocalDC = CreateCompatibleDC(hWinDC);
+	BITMAP qBitmap;
+	GetObject(reinterpret_cast<HGDIOBJ>(klocekBm), sizeof(BITMAP),reinterpret_cast<LPVOID>(&qBitmap));
+	HBITMAP hOldBmp = (HBITMAP)SelectObject(hLocalDC, klocekBm);
+	BitBlt(hWinDC, GetX() - GetSizeX(), GetY() - GetSizeY(), GetX() + GetSizeX(), GetY() + GetSizeY(), hLocalDC, 0, 0, SRCCOPY);
+	SelectObject(hLocalDC, hOldBmp);
+	DeleteDC(hLocalDC);
+	DeleteObject(klocekBm);
 }
