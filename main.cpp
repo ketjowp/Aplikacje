@@ -1,10 +1,11 @@
 #include <windows.h>
 #include <ctime>
 #include <list>
+#include "resource.h"
 #include "klocek.h"
 #include "paletka.h"
 #include "pilka.h"
-#include "resource.h"
+
 TCHAR AppName[] = "Arkanoid";
 
 std::list <Klocek> klocek;
@@ -12,10 +13,74 @@ std::list <Klocek>::iterator it;
 Paletka paletka;
 Pilka pilka;
 RECT r;
-HBRUSH brush = static_cast<HBRUSH>(GetStockObject(DC_BRUSH));
+HBRUSH brush = HBRUSH(CreateSolidBrush(RGB(255,255,255)));
 HDC hdcMem;
 HBITMAP hbmMem;
 HANDLE hbmOld;
+HWND hwnd;
+
+int zderzeniesciana(Pilka &pilka, RECT r)
+{
+	if (pilka.GetY() + pilka.GetSize() >= r.bottom)
+	{
+		return 1;
+	}
+	else if (pilka.GetY() - pilka.GetSize() + pilka.GetVelocityY() <= r.top)
+	{
+		pilka.SetVelocityY(-pilka.GetVelocityY());
+	}
+	else if (pilka.GetX() + pilka.GetSize() + pilka.GetVelocityX() >= r.right)
+	{
+		pilka.SetVelocityX(-pilka.GetVelocityX());
+	}
+	else if (pilka.GetX() - pilka.GetSize() + pilka.GetVelocityX() <= r.left)
+	{
+		pilka.SetVelocityX(-pilka.GetVelocityX());
+	}
+	return 0;
+}
+
+void zderzeniepaletka(Paletka &paletka, Pilka &pilka, RECT r)
+{
+	if (paletka.NaPaletceY(pilka.GetY(), pilka.GetSize(), pilka.GetVelocityY()) && paletka.NaPaletceX(pilka.GetX(), pilka.GetSize(), pilka.GetVelocityX()))
+	{
+		float pozpilki = pilka.GetX() - paletka.GetX();
+		float kat = (pozpilki / (paletka.GetWidth() / pilka.GetSize()));
+		pilka.SetVelocityX(kat);
+		pilka.SetVelocityY(-pilka.GetVelocityY());
+	}
+}
+
+void zderzenieklocek(std::list<Klocek>::iterator &klocek, Pilka pilka) //nie odbija siê
+{
+	if ((pilka.GetX() + pilka.GetVelocityX() + pilka.GetSize() >= klocek->GetX() - klocek->GetSizeX() && pilka.GetX() - pilka.GetSize() + pilka.GetVelocityX() <= klocek->GetX() + klocek->GetSizeX())
+		&& (pilka.GetY() + pilka.GetVelocityY() + pilka.GetSize() >= klocek->GetY() - klocek->GetSizeY() && pilka.GetY() - pilka.GetSize() + pilka.GetVelocityY() <= klocek->GetY() + klocek->GetSizeY()))
+	{
+		if (pilka.GetX() - pilka.GetVelocityX() + pilka.GetSize() >= klocek->GetX() - klocek->GetSizeX())
+		{
+			pilka.SetVelocityX(-pilka.GetVelocityX());
+			klocek->SetHit(TRUE);
+		}
+		if (pilka.GetX() + pilka.GetVelocityX() - pilka.GetSize() <= klocek->GetX() + klocek->GetSizeX())
+		{
+			pilka.SetVelocityX(-pilka.GetVelocityX());
+			klocek->SetHit(TRUE);
+		}
+
+		if (pilka.GetY() + pilka.GetVelocityY() + pilka.GetSize() >= klocek->GetY() - klocek->GetSizeY())
+		{
+			pilka.SetVelocityY(-pilka.GetVelocityY());
+			klocek->SetHit(TRUE);
+		}
+		if (pilka.GetY() + pilka.GetVelocityY() - pilka.GetSize() <= klocek->GetY() + klocek->GetSizeY())
+		{
+			pilka.SetVelocityY(-pilka.GetVelocityY());
+			klocek->SetHit(TRUE);
+		}
+	}
+}
+
+
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	switch (message)
@@ -23,18 +88,19 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 	case WM_CREATE: 
 	{
 		GetClientRect(hwnd, &r);
+		
 		for (int i = 0; i < 40; i++)
 		{
 			if (i<10)
-				klocek.push_back(Klocek(30 + i * 80, 100, 20, 10, FALSE));
+				klocek.push_back(Klocek(0.05*r.right + i * 0.1*r.right, 100, 20, 10, FALSE));
 			if (i >= 10 && i <20)
-				klocek.push_back(Klocek(30 + (i - 10) * 80, 150, 20, 10, FALSE));
+				klocek.push_back(Klocek(0.05*r.right + (i - 10) *0.1*r.right, 150, 20, 10, FALSE));
 			if (i >= 20 && i <30)
-				klocek.push_back(Klocek(30 + (i - 20) * 80, 200, 20, 10, FALSE));
+				klocek.push_back(Klocek(0.05*r.right + (i - 20) * 0.1*r.right, 200, 20, 10, FALSE));
 			if (i >= 30 && i<40)
-				klocek.push_back(Klocek(30 + (i - 30) * 80, 250, 20, 10, FALSE));
+				klocek.push_back(Klocek(0.05*r.right + (i - 30) * 0.1*r.right, 250, 20, 10, FALSE));
 		}
-		
+
 		paletka.paletkastart(r.right / 2, r.bottom - r.bottom*0.1, 16, 100, 15, hwnd);
 		pilka.pilkastart(r.right / 2, r.bottom - r.bottom*0.135, 10, 0, 0, hwnd);
 		
@@ -86,40 +152,67 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 	{
 		switch (wParam)
 		{
-			case 1:
+		case 1:
+		{
+			if (GetAsyncKeyState(VK_LEFT)) //poruszanie siê paletk¹
 			{
-				if (GetAsyncKeyState(VK_LEFT)) //poruszanie siê paletk¹
+				if (paletka.GetX() - paletka.GetWidth() / 2 - paletka.GetVelocity() > r.left)
 				{
-					if (paletka.GetX() - paletka.GetWidth() / 2 - paletka.GetVelocity() > r.left)
+					paletka.SetX(-paletka.GetVelocity());
+					if (pilka.GetStart() == FALSE)
 					{
-						paletka.SetX(-paletka.GetVelocity());
-						if (pilka.GetStart() == FALSE)
-						{
-							pilka.SetX(-paletka.GetVelocity());
-						}
+						pilka.SetX(-paletka.GetVelocity());
 					}
-
 				}
-				if (GetAsyncKeyState(VK_RIGHT)) //poruszanie siê paletk¹
+
+			}
+			if (GetAsyncKeyState(VK_RIGHT)) //poruszanie siê paletk¹
+			{
+				if (paletka.GetX() + paletka.GetWidth() / 2 + paletka.GetVelocity() < r.right)
 				{
-					if (paletka.GetX() + paletka.GetWidth() / 2 + paletka.GetVelocity() < r.right)
+					paletka.SetX(paletka.GetVelocity());
+					if (pilka.GetStart() == FALSE)
 					{
-						paletka.SetX(paletka.GetVelocity());
-						if (pilka.GetStart() == FALSE)
-						{
-							pilka.SetX(paletka.GetVelocity());
-						}
+						pilka.SetX(paletka.GetVelocity());
 					}
 				}
 			}
+		}
 
-			if (pilka.GetStart()) //poruszanie pi³ki
+
+			if (pilka.GetStart()) //poruszanie siê pi³ki
 			{
 				pilka.SetY(pilka.GetVelocityY());
 				pilka.SetX(pilka.GetVelocityX());
 			}
+
+			if (zderzeniesciana(pilka, r) == 1)
+			{
+				KillTimer(hwnd, 1);
+				if (MessageBox(hwnd, "PORA¯KA", "Game over", MB_OK) == IDOK)
+				{
+					DestroyWindow(hwnd);
+				}
+			}
+
+			zderzeniepaletka(paletka, pilka, r);
 			
-		InvalidateRect(hwnd, NULL, FALSE);
+			for (it = klocek.begin(); it != klocek.end();) //tutaj mo¿e byæ b³¹d, który powoduje nieodbijanie siê pi³ki
+			{	
+				zderzenieklocek(it, pilka);
+				if (it->GetHit()) it=klocek.erase(it++);
+				else ++it;	
+			}
+
+			if(klocek.empty())
+			{
+				KillTimer(hwnd, 1);
+				if (MessageBox(hwnd, "WYGRANA", "Koniec gry", MB_OK) == IDOK)
+				{
+					DestroyWindow(hwnd);
+				}
+			}
+			InvalidateRect(hwnd, NULL, FALSE);
 		}
 	}break;
 
@@ -143,16 +236,17 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,LPSTR lpCmdLine,
 		wndclass.cbClsExtra = 0;
 		wndclass.cbWndExtra = 0;
 		wndclass.hInstance = hInstance;
-		wndclass.hIcon = NULL;
+		wndclass.hIcon = LoadIcon(NULL,MAKEINTRESOURCE(IDB_BITMAP3));
 		wndclass.hCursor = LoadCursor(NULL, IDC_ARROW);
-		wndclass.hbrBackground = (HBRUSH)GetStockObject(WHITE_BRUSH);
+		wndclass.hbrBackground = (HBRUSH)(CreateSolidBrush(RGB(255, 255, 255)));
 		wndclass.lpszMenuName = NULL;
-		wndclass.lpszClassName = AppName;
+		wndclass.lpszClassName = "Arkanoid";
+
 
 		if (RegisterClass(&wndclass) == 0)
 			return FALSE;
 
-		hwnd = CreateWindowEx(WS_EX_WINDOWEDGE, AppName, AppName, WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME ^WS_MAXIMIZEBOX | WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
+		hwnd = CreateWindowEx(WS_EX_WINDOWEDGE, "Arkanoid", "Arkanoid", WS_OVERLAPPEDWINDOW^WS_THICKFRAME^WS_MAXIMIZEBOX| WS_VISIBLE, CW_USEDEFAULT, CW_USEDEFAULT, 800, 600, NULL, NULL, hInstance, NULL);
 
 		if (hwnd == NULL)
 			return FALSE;
