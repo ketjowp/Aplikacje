@@ -1,6 +1,8 @@
 #include "pilka.h"
 #include <windows.h>
 #include "resource.h"
+#include <list>
+#include "klocek.h"
 
 Pilka::Pilka()
 {
@@ -57,9 +59,10 @@ void Pilka::SetVelocityX(int velocity)
 {
 	this->velocityX = velocity;
 }
-void Pilka::SetVelocityY(int velocity)
+bool Pilka::SetVelocityY(int velocity)
 {
 	this->velocityY = velocity;
+	return TRUE;
 }
 void Pilka::Reset(RECT r)
 {
@@ -69,6 +72,8 @@ void Pilka::Reset(RECT r)
 	velocityY = 0;
 	start = FALSE;
 }
+
+
 BOOLEAN Pilka::GetStart()const
 {
 	return start;

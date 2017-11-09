@@ -115,12 +115,14 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="paletka.cpp" />
     <ClCompile Include="pilka.cpp" />
+    <ClCompile Include="zderzenia.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="klocek.h" />
     <ClInclude Include="paletka.h" />
     <ClInclude Include="pilka.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="zderzenia.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="ClassDiagram.cd" />

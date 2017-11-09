@@ -2,12 +2,11 @@
 #include <ctime>
 #include <list>
 #include "resource.h"
-#include "klocek.h"
-#include "paletka.h"
-#include "pilka.h"
+#include "zderzenia.h"
 
 TCHAR AppName[] = "Arkanoid";
 
+using namespace std;
 std::list <Klocek> klocek;
 std::list <Klocek>::iterator it;
 Paletka paletka;
@@ -18,67 +17,6 @@ HDC hdcMem;
 HBITMAP hbmMem;
 HANDLE hbmOld;
 HWND hwnd;
-
-int zderzeniesciana(Pilka &pilka, RECT r)
-{
-	if (pilka.GetY() + pilka.GetSize() >= r.bottom)
-	{
-		return 1;
-	}
-	else if (pilka.GetY() - pilka.GetSize() + pilka.GetVelocityY() <= r.top)
-	{
-		pilka.SetVelocityY(-pilka.GetVelocityY());
-	}
-	else if (pilka.GetX() + pilka.GetSize() + pilka.GetVelocityX() >= r.right)
-	{
-		pilka.SetVelocityX(-pilka.GetVelocityX());
-	}
-	else if (pilka.GetX() - pilka.GetSize() + pilka.GetVelocityX() <= r.left)
-	{
-		pilka.SetVelocityX(-pilka.GetVelocityX());
-	}
-	return 0;
-}
-
-void zderzeniepaletka(Paletka &paletka, Pilka &pilka, RECT r)
-{
-	if (paletka.NaPaletceY(pilka.GetY(), pilka.GetSize(), pilka.GetVelocityY()) && paletka.NaPaletceX(pilka.GetX(), pilka.GetSize(), pilka.GetVelocityX()))
-	{
-		float pozpilki = pilka.GetX() - paletka.GetX();
-		float kat = (pozpilki / (paletka.GetWidth() / pilka.GetSize()));
-		pilka.SetVelocityX(kat);
-		pilka.SetVelocityY(-pilka.GetVelocityY());
-	}
-}
-
-void zderzenieklocek(std::list<Klocek>::iterator &klocek, Pilka pilka) //nie odbija siê
-{
-	if ((pilka.GetX() + pilka.GetVelocityX() + pilka.GetSize() >= klocek->GetX() - klocek->GetSizeX() && pilka.GetX() - pilka.GetSize() + pilka.GetVelocityX() <= klocek->GetX() + klocek->GetSizeX())
-		&& (pilka.GetY() + pilka.GetVelocityY() + pilka.GetSize() >= klocek->GetY() - klocek->GetSizeY() && pilka.GetY() - pilka.GetSize() + pilka.GetVelocityY() <= klocek->GetY() + klocek->GetSizeY()))
-	{
-		if (pilka.GetX() - pilka.GetVelocityX() + pilka.GetSize() >= klocek->GetX() - klocek->GetSizeX())
-		{
-			pilka.SetVelocityX(-pilka.GetVelocityX());
-			klocek->SetHit(TRUE);
-		}
-		if (pilka.GetX() + pilka.GetVelocityX() - pilka.GetSize() <= klocek->GetX() + klocek->GetSizeX())
-		{
-			pilka.SetVelocityX(-pilka.GetVelocityX());
-			klocek->SetHit(TRUE);
-		}
-
-		if (pilka.GetY() + pilka.GetVelocityY() + pilka.GetSize() >= klocek->GetY() - klocek->GetSizeY())
-		{
-			pilka.SetVelocityY(-pilka.GetVelocityY());
-			klocek->SetHit(TRUE);
-		}
-		if (pilka.GetY() + pilka.GetVelocityY() - pilka.GetSize() <= klocek->GetY() + klocek->GetSizeY())
-		{
-			pilka.SetVelocityY(-pilka.GetVelocityY());
-			klocek->SetHit(TRUE);
-		}
-	}
-}
 
 
 LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -177,7 +115,6 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 					}
 				}
 			}
-		}
 
 
 			if (pilka.GetStart()) //poruszanie siê pi³ki
@@ -196,15 +133,18 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 			}
 
 			zderzeniepaletka(paletka, pilka, r);
-			
-			for (it = klocek.begin(); it != klocek.end();) //tutaj mo¿e byæ b³¹d, który powoduje nieodbijanie siê pi³ki
-			{	
+
+			for (it = klocek.begin();it != klocek.end();) //tutaj mo¿e byæ b³¹d, który powoduje nieodbijanie siê pi³ki od klocków
+			{
 				zderzenieklocek(it, pilka);
-				if (it->GetHit()) it=klocek.erase(it++);
-				else ++it;	
+				if (it->GetHit())
+				{
+					it = klocek.erase(it);
+				}
+				else ++it;
 			}
 
-			if(klocek.empty())
+			if (klocek.empty())
 			{
 				KillTimer(hwnd, 1);
 				if (MessageBox(hwnd, "WYGRANA", "Koniec gry", MB_OK) == IDOK)
@@ -213,6 +153,7 @@ LRESULT CALLBACK WindowProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPara
 				}
 			}
 			InvalidateRect(hwnd, NULL, FALSE);
+		}
 		}
 	}break;
 

@@ -1,5 +1,5 @@
 #include <windows.h>
-
+#include <list>
 
 class Pilka
 {
@@ -15,8 +15,8 @@ public:
 	void SetX(int x);
 	void SetY(int y);
 	void SetSize(int size);
-	void SetVelocityX(int veloc);
-	void SetVelocityY(int veloc);
+	void SetVelocityX(int velocity);
+	bool SetVelocityY(int velocity);
 	void Reset(RECT r);
 	BOOLEAN GetStart()const;
 	void SetStart(BOOLEAN start);
